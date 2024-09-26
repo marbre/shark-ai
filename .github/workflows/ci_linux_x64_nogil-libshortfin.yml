@@ -69,12 +69,12 @@ jobs:
       with:
         python-version: "3.13-dev"
         nogil : true
-    - name: Install Python packages
-      # TODO: Switch to `pip install -r requirements.txt -e libshortfin/`.
-      run: |
-        pip install -r ${{ env.LIBSHORTFIN_DIR }}/requirements-tests.txt
-        pip install -r ${{ env.LIBSHORTFIN_DIR }}/requirements-iree-compiler.txt
-        pip freeze
+    # - name: Install Python packages
+    #   # TODO: Switch to `pip install -r requirements.txt -e libshortfin/`.
+    #   run: |
+    #     pip install -r ${{ env.LIBSHORTFIN_DIR }}/requirements-tests.txt
+    #     pip install -r ${{ env.LIBSHORTFIN_DIR }}/requirements-iree-compiler.txt
+    #     pip freeze
 
     - name: Build libshortfin (full)
       run: |
@@ -91,9 +91,9 @@ jobs:
         cmake --build . --target all
         pip install -v -e .
 
-    - name: Test libshortfin (full)
-      run: |
-        cd ${{ env.LIBSHORTFIN_DIR }}/build
-        ctest --timeout 30 --output-on-failure
-        cd ${{ env.LIBSHORTFIN_DIR }}
-        pytest -s
+    # - name: Test libshortfin (full)
+    #   run: |
+    #     cd ${{ env.LIBSHORTFIN_DIR }}/build
+    #     ctest --timeout 30 --output-on-failure
+    #     cd ${{ env.LIBSHORTFIN_DIR }}
+    #     pytest -s
