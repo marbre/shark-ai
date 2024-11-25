@@ -45,9 +45,14 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
         include:
           - runs-on: ubuntu-24.04
-            name: Ubuntu 24.04
+            name: Ubuntu 24.04 (Clang)
             cmake-options:
               -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_LINKER_TYPE=LLD
+            additional-packages: clang lld
+          - runs-on: ubuntu-24.04
+            name: Ubuntu 24.04 (GCC)
+            cmake-options:
+            additional-packages:
           - runs-on: windows-2022
             name: Windows
             cmake-options:
@@ -63,7 +68,7 @@ jobs:
       if: "runner.os == 'Linux'"
       run: |
         sudo apt update
-        sudo apt install clang lld cmake ninja-build
+        sudo apt install ${{matrix.additional-packages}} cmake ninja-build
 
     - name: (Windows) Configure MSVC
       if: "runner.os == 'Windows'"
