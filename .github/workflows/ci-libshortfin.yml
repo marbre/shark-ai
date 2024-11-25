@@ -41,26 +41,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runs-on: [ubuntu-24.04, windows-2022]
+        name: ["Ubuntu 24.04 (Clang)", "Ubuntu 24.04 (GCC)", "Windows (MSVC)"]
         python-version: ["3.10", "3.11", "3.12"]
         include:
-          - runs-on: ubuntu-24.04
-            name: Ubuntu 24.04 (Clang)
+          - name: Ubuntu 24.04 (Clang)
+            runs-on: ubuntu-24.04
             cmake-options:
               -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_LINKER_TYPE=LLD
             additional-packages: clang lld
-          - runs-on: ubuntu-24.04
-            name: Ubuntu 24.04 (GCC)
-            cmake-options:
-            additional-packages:
-          - runs-on: windows-2022
-            name: Windows
-            cmake-options:
+          - name: Ubuntu 24.04 (GCC)
+            runs-on: ubuntu-24.04
+          - name: Windows (MSVC)
+            runs-on: windows-2022
         exclude:
-          # TODO: Include additional Python versions for Windows after build got fixed
-          - runs-on: windows-2022
+          # Only test Python 3.12 with GCC
+          - name: Ubuntu 24.04 (GCC)
             python-version: "3.10"
-          - runs-on: windows-2022
+          - name: Ubuntu 24.04 (GCC)
+            python-version: "3.11"
+          # TODO: Include additional Python versions for Windows after build got fixed
+          - name: Windows (MSVC)
+            python-version: "3.10"
+          - name: Windows (MSVC)
             python-version: "3.11"
 
     steps:
@@ -68,7 +70,7 @@ jobs:
       if: "runner.os == 'Linux'"
       run: |
         sudo apt update
-        sudo apt install ${{matrix.additional-packages}} cmake ninja-build
+        sudo apt install cmake ninja-build ${{matrix.additional-packages}}
 
     - name: (Windows) Configure MSVC
       if: "runner.os == 'Windows'"
@@ -141,12 +143,10 @@ jobs:
         cmake -GNinja \
           -S. \
           -Bbuild-host-only \
-          -DCMAKE_C_COMPILER=clang-18 \
-          -DCMAKE_CXX_COMPILER=clang++-18 \
-          -DCMAKE_LINKER_TYPE=LLD \
           -DSHORTFIN_IREE_SOURCE_DIR="${{ env.IREE_REPO_DIR }}" \
           -DSHORTFIN_BUILD_PYTHON_BINDINGS=ON \
           -DSHORTFIN_HAVE_AMDGPU=OFF \
           -DSHORTFIN_BUILD_STATIC=ON \
-          -DSHORTFIN_BUILD_DYNAMIC=ON
+          -DSHORTFIN_BUILD_DYNAMIC=ON \
+          ${{matrix.cmake-options}}
         cmake --build build-host-only --target all
