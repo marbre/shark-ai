@@ -1,0 +1,64 @@
+# Copyright 2024 Advanced Micro Devices, Inc.
+#
+# Licensed under the Apache License v2.0 with LLVM Exceptions.
+# See https://llvm.org/LICENSE.txt for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Validate nightly packages
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+
+jobs:
+  test_nightlies:
+    name: "Test nightlies :: ${{ matrix.package }} :: ${{ matrix.python-version }}"
+    runs-on: ${{ matrix.runs-on }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: ["ubuntu-24.04"]
+        package: ["shortfin"]
+        python-version: ["3.12"]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        submodules: false
+
+    - name: Setup Python
+      uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # - name: Install Python packages
+    #   run: |
+    #     pip install ${{ matrix.package }}/requirements-tests.txt
+    #     pip freeze
+
+    - name: Move tests and drop other sources
+      run: |
+        mv sharktank/tests sharktank-tests
+        mv shortfin/tests shortfin-tests
+        rm -r shortfin sharktank
+
+    - name: Install shortfin + test deps
+      if: ${{ matrix.package == 'shortfin'}}
+      run: |
+        pip install shortfin[apps] --pre -f https://github.com/nod-ai/shark-ai/releases/expanded_assets/dev-wheels
+        pip install pytest requests
+        pip freeze
+
+    - name: Test shortfin
+      if: ${{ matrix.package == 'shortfin'}}
+      run: |
+        # python -c "from sharktank import ops; print('Sanity check passed')"
+        pytest shortfin-tests/
